@@ -1,0 +1,12 @@
+[package]
+name = "mma-rs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = { version = "0.11.17", features = ["json"] }
+scraper = "0.16.0"
+url = "2.3.1"
+tokio = { version = "1.28.1", features = ["full"] }

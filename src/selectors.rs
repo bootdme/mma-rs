@@ -9,7 +9,7 @@ lazy_static! {
         Selector::parse("[itemprop='name'] > .nickname").unwrap();
     pub static ref IMAGE_URL_SELECTOR: Selector =
         Selector::parse("img.profile-image.photo").unwrap();
-    pub static ref AGE_SELECTOR: Selector = Selector::parse("[itemprop='birthDate']").unwrap();
+    pub static ref BIRTHDAY_SELECTOR: Selector = Selector::parse("[itemprop='birthDate']").unwrap();
     pub static ref LOCALITY_SELECTOR: Selector =
         Selector::parse("[itemprop='addressLocality']").unwrap();
     pub static ref NATIONALITY_SELECTOR: Selector =

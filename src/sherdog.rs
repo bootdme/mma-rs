@@ -87,8 +87,8 @@ pub async fn get_fighter_data(url: &str) -> Result<Fighter, Box<dyn Error>> {
         }
     }
 
-    if let Some(age_element) = info_element.select(&AGE_SELECTOR).next() {
-        fighter.age = age_element.text().collect();
+    if let Some(birthday_element) = info_element.select(&BIRTHDAY_SELECTOR).next() {
+        fighter.birthday = birthday_element.text().collect();
     }
 
     if let Some(locality_element) = info_element.select(&LOCALITY_SELECTOR).next() {

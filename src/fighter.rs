@@ -5,7 +5,6 @@ pub struct Fighter {
     pub url: String,
     pub name: String,
     pub nickname: String,
-    pub age: String,
     pub birthday: String,
     pub locality: String,
     pub nationality: String,

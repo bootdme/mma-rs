@@ -179,12 +179,71 @@ async fn get_fighter_data(url: &str) -> Result<Fighter, Box<dyn Error>> {
         fighter.weight_class = weight_class_element.text().collect();
     }
 
+    let wins_selector = Selector::parse(".wins").unwrap();
+    if let Some(wins_element) = info_element.select(&wins_selector).next() {
+        let wins_total_selector = Selector::parse(".win span:nth-child(2)").unwrap();
+        if let Some(el) = wins_element.select(&wins_total_selector).next() {
+            fighter.wins.total = el.text().collect::<String>().trim().parse::<u32>().unwrap_or(0);
+        }
+
+        let wins_by_selector = Selector::parse(".pl").unwrap();
+        let win_by_elements: Vec<_> = wins_element.select(&wins_by_selector).collect();
+
+        if let Some(el) = win_by_elements.get(0) {
+            fighter.wins.knockouts = el.text().collect::<String>().trim().parse().unwrap_or(0);
+        }
+
+        if let Some(el) = win_by_elements.get(1) {
+            fighter.wins.submissions = el.text().collect::<String>().trim().parse().unwrap_or(0);
+        }
+
+        if let Some(el) = win_by_elements.get(2) {
+            fighter.wins.decisions = el.text().collect::<String>().trim().parse().unwrap_or(0);
+        }
+
+        if let Some(el) = win_by_elements.get(3) {
+            fighter.wins.others = el.text().collect::<String>().trim().parse().unwrap_or(0);
+        }
+    }
+
+    let losses_selector = Selector::parse(".loses").unwrap();
+    if let Some(losses_element) = info_element.select(&losses_selector).next() {
+        let losses_total_selector = Selector::parse(".lose span:nth-child(2)").unwrap();
+        if let Some(el) = losses_element.select(&losses_total_selector).next() {
+            fighter.losses.total = el.text().collect::<String>().trim().parse::<u32>().unwrap_or(0);
+        }
+
+        let losses_by_selector = Selector::parse(".pl").unwrap();
+        let loss_by_elements: Vec<_> = losses_element.select(&losses_by_selector).collect();
+
+        if let Some(el) = loss_by_elements.get(0) {
+            fighter.losses.knockouts = el.text().collect::<String>().trim().parse().unwrap_or(0);
+        }
+
+        if let Some(el) = loss_by_elements.get(1) {
+            fighter.losses.submissions = el.text().collect::<String>().trim().parse().unwrap_or(0);
+        }
+
+        if let Some(el) = loss_by_elements.get(2) {
+            fighter.losses.decisions = el.text().collect::<String>().trim().parse().unwrap_or(0);
+        }
+
+        if let Some(el) = loss_by_elements.get(3) {
+            fighter.losses.others = el.text().collect::<String>().trim().parse().unwrap_or(0);
+        }
+    }
+
+    let no_contests_selector = Selector::parse(".nc span:nth-child(2)").unwrap();
+    if let Some(no_contests_element) = info_element.select(&no_contests_selector).next() {
+        fighter.no_contests = no_contests_element.text().collect::<String>().trim().parse().unwrap_or(0);
+    }
+
     Ok(fighter)
 }
 
 #[tokio::main]
 async fn main() {
-    match get_sherdog_url("Felipe Fogolin").await {
+    match get_sherdog_url("Jon Jones").await {
         Ok(url) => {
             println!("Sherdog url is {}", url);
             match get_fighter_data(&url).await {

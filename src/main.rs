@@ -4,6 +4,17 @@ mod sherdog;
 
 use sherdog::{get_sherdog_url, get_fighter_data};
 
+/// This is the main entry point for our application. The program
+/// accepts command-line arguments, the first of which should be
+/// a fighter's name.
+///
+/// # Examples
+///
+/// ```
+/// $ cargo run --release "Conor McGregor"
+/// ```
+///
+/// This will print the Sherdog URL of Conor McGregor and his fight history.
 #[tokio::main]
 async fn main() {
     let args: Vec<String> = std::env::args().collect();

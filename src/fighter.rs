@@ -1,5 +1,8 @@
 use serde::Serialize;
 
+/// Represents a fighter's profile and statistics.
+/// All strings are default to an empty string, and integers default to zero.
+/// Fights are represented as a vector of `Fight` structs.
 #[derive(Default, Serialize)]
 pub struct Fighter {
     pub url: String,
@@ -15,28 +18,34 @@ pub struct Fighter {
     pub image_url: String,
     pub wins: Wins,
     pub losses: Losses,
-    pub no_contests: u32,
+    pub no_contests: u8,
     pub fights: Vec<Fight>,
 }
 
+/// Represents a fighter's wins statistics.
+/// All fields default to zero.
 #[derive(Default, Serialize)]
 pub struct Wins {
-    pub total: u32,
-    pub knockouts: u32,
-    pub submissions: u32,
-    pub decisions: u32,
-    pub others: u32,
+    pub total: u8,
+    pub knockouts: u8,
+    pub submissions: u8,
+    pub decisions: u8,
+    pub others: u8,
 }
 
+/// Represents a fighter's losses statistics.
+/// All fields default to zero.
 #[derive(Default, Serialize)]
 pub struct Losses {
-    pub total: u32,
-    pub knockouts: u32,
-    pub submissions: u32,
-    pub decisions: u32,
-    pub others: u32,
+    pub total: u8,
+    pub knockouts: u8,
+    pub submissions: u8,
+    pub decisions: u8,
+    pub others: u8,
 }
 
+/// Represents a single fight in a fighter's fight history.
+/// All strings default to an empty string.
 #[derive(Default, Serialize)]
 pub struct Fight {
     pub name: String,

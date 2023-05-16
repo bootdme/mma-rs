@@ -1,6 +1,8 @@
 use lazy_static::lazy_static;
 use scraper::Selector;
 
+// The `lazy_static` macro is used to initialize statics that require
+// complex initialization logic such as parsing CSS selectors.
 lazy_static! {
     pub static ref SELECTOR: Selector = Selector::parse("a").unwrap();
     pub static ref INFO_SELECTOR: Selector = Selector::parse(".fighter-info").unwrap();

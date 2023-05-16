@@ -8,29 +8,77 @@ use scraper::Html;
 use reqwest::get;
 use std::time::Instant;
 
+/// A custom error type for handling errors related to Sherdog data fetching and parsing.
+///
+/// # Example
+/// ```
+/// let err = SherdogError::new("Failed to fetch data from Sherdog.");
+/// println!("{}", err);
+/// ```
 #[derive(Debug)]
 pub struct SherdogError {
+    /// A string that holds the details of the error.
     details: String
 }
 
 impl SherdogError {
+    /// Constructs a new `SherdogError`.
+    ///
+    /// # Arguments
+    /// * `msg` - A string slice that holds the error details.
+    ///
+    /// # Returns
+    /// * A new `SherdogError` instance.
     pub fn new(msg: &str) -> SherdogError {
         SherdogError{details: msg.to_string()}
     }
 }
 
 impl fmt::Display for SherdogError {
+    /// Formats the `SherdogError` for display purposes.
+    ///
+    /// # Arguments
+    /// * `f` - A mutable reference to a `Formatter`.
+    ///
+    /// # Returns
+    /// * A `Result` that indicates whether the operation was successful.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.details)
     }
 }
 
 impl Error for SherdogError {
+    /// Returns a short description of the error.
+    ///
+    /// # Returns
+    /// * A string slice that holds the error details.
     fn description(&self) -> &str {
         &self.details
     }
 }
 
+/// This function searches for a given fighter on Google and tries to find a link to the fighter's
+/// profile on Sherdog. It uses the `scraper` crate to parse the HTML document returned by Google,
+/// then selects various elements based on a predefined CSS selector, and checks if any of those elements'
+/// href attribute contains 'sherdog.com/fighter'. If it does, it returns the link.
+///
+/// # Arguments
+/// * `fighter` - A string slice that holds the name of the fighter.
+///
+/// # Returns
+/// * A `String` that contains the URL of the fighter's profile on Sherdog on success.
+/// * An error of the type `Box<dyn Error>` on failure.
+///
+/// # Errors
+/// This function will return an error if the HTTP request fails, if the HTML cannot be parsed,
+/// or if a link to the fighter's Sherdog profile cannot be found.
+///
+/// # Example
+/// ```
+/// let fighter_name = "Conor McGregor";
+/// let sherdog_url = get_sherdog_url(fighter_name).await.unwrap();
+/// println!("{}", sherdog_url);
+/// ```
 pub async fn get_sherdog_url(fighter: &str) -> Result<String, Box<dyn Error>> {
     let search_url = format!("https://www.google.com/search?q={}%20sherdog", fighter);
 
@@ -64,10 +112,38 @@ pub async fn get_sherdog_url(fighter: &str) -> Result<String, Box<dyn Error>> {
     }
 }
 
+/// This function scrapes fighter data from the Sherdog URL. It uses the `scraper` crate to parse
+/// the HTML document, then selects various elements based on predefined CSS selectors, extracts
+/// the text from those elements, and assigns the values to fields in a `Fighter` struct. If an
+/// error occurs at any point (e.g., if the HTTP request fails, if the HTML cannot be parsed, or if
+/// a required element cannot be found), the function returns an error.
+///
+/// # Arguments
+/// * `url` - A string slice that holds the Sherdog URL to scrape.
+///
+/// # Returns
+/// * `Fighter` struct with the scraped data on success.
+/// * An error of the type `Box<dyn Error>` on failure.
+///
+/// # Errors
+/// This function will return an error if the HTTP request fails, if the HTML cannot be parsed,
+/// or if a required element cannot be found.
+///
+/// # Example
+/// ```
+/// let url = "https://sherdog.com/fighter/Fighter-Name-1234";
+/// let fighter_data = get_fighter_data(url).await.unwrap();
+/// println!("{:?}", fighter_data);
+/// ```
 pub async fn get_fighter_data(url: &str) -> Result<Fighter, Box<dyn Error>> {
     let start_time = Instant::now();
+
+    // Make a GET request to the provided URL and await the text of the response body.
     let body = get(url).await?.text().await?;
+
+    // Parse the response body into an HTML document.
     let document = Html::parse_document(&body);
+
     let mut fighter = Fighter { url: url.to_string(), ..Default::default() };
 
     let info_element = document.select(&INFO_SELECTOR).next().ok_or("Failed to parse info element")?;
@@ -117,7 +193,7 @@ pub async fn get_fighter_data(url: &str) -> Result<Fighter, Box<dyn Error>> {
 
     if let Some(wins_element) = info_element.select(&WINS_SELECTOR).next() {
         if let Some(el) = wins_element.select(&WINS_TOTAL_SELECTOR).next() {
-            fighter.wins.total = el.text().collect::<String>().trim().parse::<u32>().unwrap_or(0);
+            fighter.wins.total = el.text().collect::<String>().trim().parse::<u8>().unwrap_or(0);
         }
 
         let win_by_elements: Vec<_> = wins_element.select(&WINS_BY_SELECTOR).collect();
@@ -141,7 +217,7 @@ pub async fn get_fighter_data(url: &str) -> Result<Fighter, Box<dyn Error>> {
 
     if let Some(losses_element) = info_element.select(&LOSSES_SELECTOR).next() {
         if let Some(el) = losses_element.select(&LOSSES_TOTAL_SELECTOR).next() {
-            fighter.losses.total = el.text().collect::<String>().trim().parse::<u32>().unwrap_or(0);
+            fighter.losses.total = el.text().collect::<String>().trim().parse::<u8>().unwrap_or(0);
         }
 
         let loss_by_elements: Vec<_> = losses_element.select(&LOSSES_BY_SELECTOR).collect();

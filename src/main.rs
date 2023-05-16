@@ -3,9 +3,7 @@ use scraper::{Html, Selector};
 use url::Url;
 use serde_json::json;
 use serde::Serialize;
-use std::collections::HashMap;
 use std::error::Error;
-use std::str::FromStr;
 use std::fmt;
 
 #[derive(Debug)]
@@ -236,6 +234,65 @@ async fn get_fighter_data(url: &str) -> Result<Fighter, Box<dyn Error>> {
     let no_contests_selector = Selector::parse(".nc span:nth-child(2)").unwrap();
     if let Some(no_contests_element) = info_element.select(&no_contests_selector).next() {
         fighter.no_contests = no_contests_element.text().collect::<String>().trim().parse().unwrap_or(0);
+    }
+
+    let fight_history_selector = Selector::parse(".module.fight_history tr:not(.table_head)").unwrap();
+    let fights = document.select(&fight_history_selector);
+
+    for fight_element in fights {
+        let mut fight = Fight::default();
+
+        let result_selector = Selector::parse("td:nth-child(1) .final_result").unwrap();
+        if let Some(result_element) = fight_element.select(&result_selector).next() {
+            fight.result = result_element.text().collect();
+        }
+
+        let opponent_name_selector = Selector::parse("td:nth-child(2) a").unwrap();
+        if let Some(opponent_name_element) = fight_element.select(&opponent_name_selector).next() {
+            fight.opponent = opponent_name_element.text().collect();
+            if let Some(href_attr) = opponent_name_element.value().attr("href") {
+                fight.opponent_url = href_attr.to_string();
+            }
+        }
+
+        let event_selector = Selector::parse("td:nth-child(3) a").unwrap();
+        if let Some(event_name_element) = fight_element.select(&event_selector).next() {
+            fight.name = event_name_element.text().collect();
+            if let Some(href_attr) = event_name_element.value().attr("href") {
+                fight.event_url = href_attr.to_string();
+            }
+        }
+
+        let event_date_selector = Selector::parse("td:nth-child(3) .sub_line").unwrap();
+        if let Some(event_date_element) = fight_element.select(&event_date_selector).next() {
+            fight.date = event_date_element.text().collect();
+        }
+
+        let method_selector = Selector::parse("td:nth-child(4)").unwrap();
+        if let Some(method_element) = fight_element.select(&method_selector).next() {
+            let method_text: String = method_element.text().collect();
+            let method_parts: Vec<&str> = method_text.splitn(2, ')').collect();
+            fight.method = format!("{}{}", method_parts[0], ')');
+        }
+
+        let referee_selector = Selector::parse("td:nth-child(4) .sub_line").unwrap();
+        if let Some(referee_element) = fight_element.select(&referee_selector).next() {
+            fight.referee = referee_element.text().collect();
+        }
+
+        let round_selector = Selector::parse("td:nth-child(5)").unwrap();
+        if let Some(round_element) = fight_element.select(&round_selector).next() {
+            fight.round = round_element.text().collect();
+        }
+
+        let time_selector = Selector::parse("td:nth-child(6)").unwrap();
+        if let Some(time_element) = fight_element.select(&time_selector).next() {
+            fight.time = time_element.text().collect();
+        }
+
+        if !fight.result.is_empty() {
+            fighter.fights.push(fight);
+        }
     }
 
     Ok(fighter)

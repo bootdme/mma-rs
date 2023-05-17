@@ -1,12 +1,12 @@
-use crate::selectors::*;
 use crate::fighter::{Fight, Fighter};
+use crate::selectors::*;
 
-use url::Url;
-use std::fmt;
-use std::error::Error;
-use scraper::Html;
 use reqwest::get;
+use scraper::Html;
+use std::error::Error;
+use std::fmt;
 use std::time::Instant;
+use url::Url;
 
 /// A custom error type for handling errors related to Sherdog data fetching and parsing.
 ///
@@ -18,7 +18,7 @@ use std::time::Instant;
 #[derive(Debug)]
 pub struct SherdogError {
     /// A string that holds the details of the error.
-    details: String
+    details: String,
 }
 
 impl SherdogError {
@@ -30,7 +30,9 @@ impl SherdogError {
     /// # Returns
     /// * A new `SherdogError` instance.
     pub fn new(msg: &str) -> SherdogError {
-        SherdogError{details: msg.to_string()}
+        SherdogError {
+            details: msg.to_string(),
+        }
     }
 }
 
@@ -96,7 +98,10 @@ pub async fn get_sherdog_url(fighter: &str) -> Result<String, Box<dyn Error>> {
             if href.contains("sherdog.com/fighter") {
                 let full_url = format!("https://www.google.com{}", href);
                 let parsed_url = Url::parse(&full_url).expect("Failed to parse URL");
-                parsed_url.query_pairs().find(|(k, _)| k == "q").map(|(_, v)| v.into_owned())
+                parsed_url
+                    .query_pairs()
+                    .find(|(k, _)| k == "q")
+                    .map(|(_, v)| v.into_owned())
             } else {
                 None
             }
@@ -144,9 +149,15 @@ pub async fn get_fighter_data(url: &str) -> Result<Fighter, Box<dyn Error>> {
     // Parse the response body into an HTML document.
     let document = Html::parse_document(&body);
 
-    let mut fighter = Fighter { url: url.to_string(), ..Default::default() };
+    let mut fighter = Fighter {
+        url: url.to_string(),
+        ..Default::default()
+    };
 
-    let info_element = document.select(&INFO_SELECTOR).next().ok_or("Failed to parse info element")?;
+    let info_element = document
+        .select(&INFO_SELECTOR)
+        .next()
+        .ok_or("Failed to parse info element")?;
 
     if let Some(name_element) = info_element.select(&NAME_SELECTOR).next() {
         fighter.name = name_element.text().collect();
@@ -183,7 +194,8 @@ pub async fn get_fighter_data(url: &str) -> Result<Fighter, Box<dyn Error>> {
         fighter.weight = weight_element.text().collect();
     }
 
-    fighter.association = info_element.select(&ASSOCIATION_SELECTOR)
+    fighter.association = info_element
+        .select(&ASSOCIATION_SELECTOR)
         .map(|element| element.text().collect::<String>())
         .collect();
 
@@ -193,7 +205,12 @@ pub async fn get_fighter_data(url: &str) -> Result<Fighter, Box<dyn Error>> {
 
     if let Some(wins_element) = info_element.select(&WINS_SELECTOR).next() {
         if let Some(el) = wins_element.select(&WINS_TOTAL_SELECTOR).next() {
-            fighter.wins.total = el.text().collect::<String>().trim().parse::<u8>().unwrap_or(0);
+            fighter.wins.total = el
+                .text()
+                .collect::<String>()
+                .trim()
+                .parse::<u8>()
+                .unwrap_or(0);
         }
 
         let win_by_elements: Vec<_> = wins_element.select(&WINS_BY_SELECTOR).collect();
@@ -217,7 +234,12 @@ pub async fn get_fighter_data(url: &str) -> Result<Fighter, Box<dyn Error>> {
 
     if let Some(losses_element) = info_element.select(&LOSSES_SELECTOR).next() {
         if let Some(el) = losses_element.select(&LOSSES_TOTAL_SELECTOR).next() {
-            fighter.losses.total = el.text().collect::<String>().trim().parse::<u8>().unwrap_or(0);
+            fighter.losses.total = el
+                .text()
+                .collect::<String>()
+                .trim()
+                .parse::<u8>()
+                .unwrap_or(0);
         }
 
         let loss_by_elements: Vec<_> = losses_element.select(&LOSSES_BY_SELECTOR).collect();
@@ -240,7 +262,12 @@ pub async fn get_fighter_data(url: &str) -> Result<Fighter, Box<dyn Error>> {
     }
 
     if let Some(no_contests_element) = info_element.select(&NO_CONTESTS_SELECTOR).next() {
-        fighter.no_contests = no_contests_element.text().collect::<String>().trim().parse().unwrap_or(0);
+        fighter.no_contests = no_contests_element
+            .text()
+            .collect::<String>()
+            .trim()
+            .parse()
+            .unwrap_or(0);
     }
 
     let fights = document.select(&FIGHT_HISTORY_SELECTOR);
